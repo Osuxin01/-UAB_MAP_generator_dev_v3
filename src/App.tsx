@@ -1115,7 +1115,7 @@ export function App() {
       </section>
 
       {isEditing && (
-        <div className="mobile-edit-bar">
+        <div className={`mobile-edit-bar${mode === "move" ? " mobile-move-controls" : ""}`}>
           {sceneControls}
           <div className="mobile-edit-status">
             <strong aria-live="polite">{selectionLabel}</strong>
@@ -1132,20 +1132,21 @@ export function App() {
               </select>
             )}
           </div>
-          <div className="mobile-edit-controls">
-            {mode === "edit" && (
-              <>
-                <button type="button" onClick={() => moveSelected(-0.5, 0)} disabled={!canMoveSelection}>←</button>
-                <button type="button" onClick={() => moveSelected(0, 0.5)} disabled={!canMoveSelection}>↑</button>
-                <button type="button" onClick={() => moveSelected(0, -0.5)} disabled={!canMoveSelection}>↓</button>
-                <button type="button" onClick={() => moveSelected(0.5, 0)} disabled={!canMoveSelection}>→</button>
-                {rotationControls}
-              </>
-            )}
-            <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
-          </div>
+          {mode === "edit" && (
+            <div className="mobile-edit-controls">
+              <button type="button" onClick={() => moveSelected(-0.5, 0)} disabled={!canMoveSelection}>←</button>
+              <button type="button" onClick={() => moveSelected(0, 0.5)} disabled={!canMoveSelection}>↑</button>
+              <button type="button" onClick={() => moveSelected(0, -0.5)} disabled={!canMoveSelection}>↓</button>
+              <button type="button" onClick={() => moveSelected(0.5, 0)} disabled={!canMoveSelection}>→</button>
+              {rotationControls}
+              <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
+            </div>
+          )}
           <div className="mobile-add-row">
             {addControls}
+            {mode === "move" && (
+              <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
+            )}
           </div>
           {routeControls}
           {shotControls}

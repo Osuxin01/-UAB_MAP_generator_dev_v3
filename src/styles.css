@@ -801,8 +801,14 @@ button:disabled {
     gap: 6px;
   }
 
-  .mobile-edit-controls > .danger-button:only-child {
-    grid-column: 1 / -1;
+  .mobile-move-controls {
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .mobile-move-controls .mobile-add-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(52px, auto);
+    gap: 6px;
   }
 
   .mobile-edit-controls button,
