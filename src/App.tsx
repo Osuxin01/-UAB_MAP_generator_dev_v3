@@ -778,7 +778,7 @@ export function App() {
             }
           }}
         >
-          {team === "ally" ? "味方（黒）を追加" : "敵（赤）を追加"}
+          {team === "ally" ? "味方（緑）を追加" : "敵（赤）を追加"}
         </button>
       ))}
     </>
@@ -1732,7 +1732,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: MapPlayer, metrics: M
   const center = worldToCanvas(player, metrics);
   ctx.beginPath();
   ctx.arc(center.x, center.y, PLAYER_RADIUS * metrics.scale, 0, 2 * Math.PI);
-  ctx.fillStyle = player.team === "ally" ? "#000000" : "#d00000";
+  ctx.fillStyle = player.team === "ally" ? "#008037" : "#d00000";
   ctx.fill();
   ctx.strokeStyle = selected ? "#f5a400" : "#ffffff";
   ctx.lineWidth = selected ? 4 : 2;
