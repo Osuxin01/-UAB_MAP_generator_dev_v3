@@ -578,6 +578,10 @@ button:disabled {
   box-shadow: 0 16px 34px rgba(20, 35, 45, 0.14);
 }
 
+.field-viewport {
+  display: contents;
+}
+
 .generating-overlay {
   position: absolute;
   inset: 14px;
@@ -952,6 +956,37 @@ button:disabled {
     position: static;
     align-self: stretch;
     height: auto;
+  }
+
+  .move-map-panel {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .move-map-panel .canvas-frame {
+    padding: 0;
+    background: transparent;
+  }
+
+  .move-map-panel .field-viewport {
+    position: relative;
+    display: block;
+    width: min(100cqw, calc(100cqh * var(--field-ratio)));
+    aspect-ratio: var(--field-ratio);
+    overflow: hidden;
+  }
+
+  .move-map-panel .field-viewport canvas {
+    position: absolute;
+    top: var(--map-canvas-top);
+    left: var(--map-canvas-left);
+    width: var(--map-canvas-width);
+    max-width: none;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
 

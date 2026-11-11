@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FocusEvent, type MouseEvent, type PointerEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type CSSProperties, type FocusEvent, type MouseEvent, type PointerEvent } from "react";
 import {
   defaultGeneratorConfig,
   barrierClearsStartBoxes,
@@ -801,6 +801,7 @@ export function App() {
     total[barrier.shape] = (total[barrier.shape] ?? 0) + 1;
     return total;
   }, {});
+  const fieldViewportStyle = mode === "move" ? getFieldViewportStyle(generated.field) : undefined;
 
   return (
     <main className={`app-shell${isEditing ? " editing-layout" : ""}`}>
@@ -1065,7 +1066,7 @@ export function App() {
 
         <section
           ref={mapPanelRef}
-          className={`map-panel${isEditing ? " editing-map-panel" : ""}`}
+          className={`map-panel${isEditing ? " editing-map-panel" : ""}${mode === "move" ? " move-map-panel" : ""}`}
           aria-label="生成マッププレビュー"
         >
           <div className="map-toolbar">
@@ -1092,21 +1093,23 @@ export function App() {
                 <span>条件に合うマップを探しています</span>
               </div>
             )}
-            <canvas
-              key={isEditing ? "edit" : "preview"}
-              ref={canvasRef}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
-              onClick={handleCanvasClick}
-              onPointerDown={handleCanvasPointerDown}
-              onPointerMove={handleCanvasPointerMove}
-              onPointerUp={endPlayerDrag}
-              onPointerCancel={endPlayerDrag}
-              onLostPointerCapture={endPlayerDrag}
-              className={mode === "move" && !placingTeam && !shotDraft
-                ? `player-move-canvas${drawingRoute ? " route-drawing-canvas" : ""}`
-                : isEditing ? "editable-canvas" : ""}
-            />
+            <div className="field-viewport" style={fieldViewportStyle}>
+              <canvas
+                key={isEditing ? "edit" : "preview"}
+                ref={canvasRef}
+                width={CANVAS_WIDTH}
+                height={CANVAS_HEIGHT}
+                onClick={handleCanvasClick}
+                onPointerDown={handleCanvasPointerDown}
+                onPointerMove={handleCanvasPointerMove}
+                onPointerUp={endPlayerDrag}
+                onPointerCancel={endPlayerDrag}
+                onLostPointerCapture={endPlayerDrag}
+                className={mode === "move" && !placingTeam && !shotDraft
+                  ? `player-move-canvas${drawingRoute ? " route-drawing-canvas" : ""}`
+                  : isEditing ? "editable-canvas" : ""}
+              />
+            </div>
           </div>
         </section>
       </section>
@@ -1451,6 +1454,18 @@ function getMetrics(fieldWidth: number, fieldHeight: number): Metrics {
     offsetY: PADDING + 72,
     fieldHeight,
   };
+}
+
+function getFieldViewportStyle(field: GeneratedMap["field"]): CSSProperties {
+  const { scale, offsetX, offsetY } = getMetrics(field.width, field.height);
+  const width = field.width * scale;
+  const height = field.height * scale;
+  return {
+    "--field-ratio": width / height,
+    "--map-canvas-width": `${CANVAS_WIDTH / width * 100}%`,
+    "--map-canvas-left": `${-offsetX / width * 100}%`,
+    "--map-canvas-top": `${-offsetY / height * 100}%`,
+  } as CSSProperties;
 }
 
 function worldToCanvas(point: Point, metrics: Metrics): Point {
