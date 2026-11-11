@@ -927,6 +927,27 @@ button:disabled {
     position: static;
   }
 
+  .mobile-action-bar.move-action-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .move-action-bar > :not(.mobile-move-action) {
+    display: none;
+  }
+
+  .move-action-bar .mobile-move-action {
+    width: auto;
+    min-width: 64px;
+    min-height: 34px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
   .editing-map-panel {
     position: static;
     align-self: stretch;

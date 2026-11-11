@@ -815,7 +815,7 @@ export function App() {
         </div>
       </header>
 
-      <div className="mobile-action-bar">
+      <div className={`mobile-action-bar${mode === "move" ? " move-action-bar" : ""}`}>
         <button
           className="menu-button mobile-menu-action"
           type="button"
