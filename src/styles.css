@@ -294,27 +294,14 @@ button:disabled {
   padding-top: 12px;
 }
 
-.edit-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+.mode-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.edit-head h2,
-.edit-head p,
 .selected-label {
   margin: 0;
-}
-
-.edit-head h2 {
-  color: #405568;
-  font-size: 14px;
-  text-transform: uppercase;
-}
-
-.edit-head p,
-.selected-label {
   color: #607482;
   font-size: 12px;
   line-height: 1.35;
@@ -339,11 +326,6 @@ button:disabled {
   background: #ffffff;
   color: #172834;
   font-weight: 800;
-}
-
-.compact-button {
-  width: auto;
-  min-width: 64px;
 }
 
 .edit-tools {
@@ -379,6 +361,48 @@ button:disabled {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.edit-button-row > :only-child {
+  grid-column: 1 / -1;
+}
+
+.player-add-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.route-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.route-controls button {
+  min-height: 34px;
+  padding: 6px 4px;
+  font-size: 12px;
+}
+
+.route-controls select {
+  min-width: 0;
+  border: 1px solid #bccbd3;
+  border-radius: 6px;
+  padding: 6px;
+  background: #ffffff;
+  color: #172834;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.route-controls button[aria-pressed="true"] {
+  background: #20303d;
+  color: #ffffff;
+}
+
+.add-row button[aria-pressed="true"],
+.mobile-add-row button[aria-pressed="true"] {
+  background: #20303d;
+  color: #ffffff;
+}
+
 .add-row select {
   min-height: 34px;
   border: 1px solid #bccbd3;
@@ -399,6 +423,20 @@ button:disabled {
 }
 
 .editable-canvas {
+  cursor: crosshair;
+}
+
+.player-move-canvas {
+  cursor: grab;
+  touch-action: none;
+}
+
+.player-move-canvas:active {
+  cursor: grabbing;
+}
+
+.route-drawing-canvas,
+.route-drawing-canvas:active {
   cursor: crosshair;
 }
 
@@ -627,8 +665,8 @@ button:disabled {
     top: 0;
     z-index: 30;
     display: grid;
-    grid-template-columns: 42px repeat(3, minmax(0, 1fr));
-    grid-template-areas: "menu generate save edit";
+    grid-template-columns: 42px repeat(4, minmax(0, 1fr));
+    grid-template-areas: "menu generate save edit move";
     gap: 8px;
     padding: 8px;
     border: 1px solid #c7d3da;
@@ -661,6 +699,10 @@ button:disabled {
 
   .mobile-edit-action {
     grid-area: edit;
+  }
+
+  .mobile-move-action {
+    grid-area: move;
   }
 
   .generator-layout {
@@ -734,6 +776,10 @@ button:disabled {
     white-space: nowrap;
   }
 
+  .mobile-edit-status strong:only-child {
+    grid-column: 1 / -1;
+  }
+
   .mobile-edit-status select,
   .mobile-add-row select {
     min-height: 34px;
@@ -749,6 +795,10 @@ button:disabled {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 6px;
+  }
+
+  .mobile-edit-controls > .danger-button:only-child {
+    grid-column: 1 / -1;
   }
 
   .mobile-edit-controls button,
@@ -810,8 +860,8 @@ button:disabled {
   .mobile-action-bar {
     grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
-      "menu generate edit"
-      "save save save";
+      "menu generate save"
+      "edit edit move";
   }
 
   .mobile-action-bar .primary-button,
@@ -875,11 +925,6 @@ button:disabled {
   .editing-layout .mobile-action-bar,
   .editing-layout .mobile-edit-bar {
     position: static;
-  }
-
-  .editing-layout .mobile-action-bar {
-    grid-template-columns: 42px repeat(3, minmax(0, 1fr));
-    grid-template-areas: "menu generate save edit";
   }
 
   .editing-map-panel {
