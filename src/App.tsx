@@ -804,7 +804,7 @@ export function App() {
   const fieldViewportStyle = mode === "move" ? getFieldViewportStyle(generated.field) : undefined;
 
   return (
-    <main className={`app-shell${isEditing ? " editing-layout" : ""}`}>
+    <main className={`app-shell${isEditing ? " editing-layout" : ""}${mode === "move" ? " move-layout" : ""}`}>
       <header className="app-header">
         <div>
           <h1>UABマップ自動生成ツール</h1>
