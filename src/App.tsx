@@ -801,10 +801,10 @@ export function App() {
     total[barrier.shape] = (total[barrier.shape] ?? 0) + 1;
     return total;
   }, {});
-  const fieldViewportStyle = mode === "move" ? getFieldViewportStyle(generated.field) : undefined;
+  const fieldViewportStyle = isEditing ? getFieldViewportStyle(generated.field) : undefined;
 
   return (
-    <main className={`app-shell${isEditing ? " editing-layout" : ""}${mode === "move" ? " move-layout" : ""}`}>
+    <main className={`app-shell${isEditing ? " editing-layout" : ""}`}>
       <header className="app-header">
         <div>
           <h1>UABマップ自動生成ツール</h1>
@@ -816,7 +816,7 @@ export function App() {
         </div>
       </header>
 
-      <div className={`mobile-action-bar${mode === "move" ? " move-action-bar" : ""}`}>
+      <div className="mobile-action-bar">
         <button
           className="menu-button mobile-menu-action"
           type="button"
@@ -1066,7 +1066,7 @@ export function App() {
 
         <section
           ref={mapPanelRef}
-          className={`map-panel${isEditing ? " editing-map-panel" : ""}${mode === "move" ? " move-map-panel" : ""}`}
+          className={`map-panel${isEditing ? " editing-map-panel" : ""}`}
           aria-label="生成マッププレビュー"
         >
           <div className="map-toolbar">

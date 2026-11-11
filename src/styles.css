@@ -920,12 +920,14 @@ button:disabled {
 
 @media (max-width: 720px) {
   .editing-layout {
+    --mode-button-width: 64px;
+    --mode-button-gutter: calc(var(--mode-button-width) + 8px);
     position: fixed;
     inset: 0 0 auto;
     min-height: 0;
     height: 100vh;
     height: 100dvh;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
   }
 
   .editing-layout .app-header {
@@ -937,18 +939,12 @@ button:disabled {
     position: static;
   }
 
-  .move-layout {
-    --move-button-width: 64px;
-    --move-button-gutter: calc(var(--move-button-width) + 8px);
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-
-  .move-layout > .generator-layout,
-  .move-layout > .move-action-bar {
+  .editing-layout > .generator-layout,
+  .editing-layout > .mobile-action-bar {
     grid-area: 1 / 1;
   }
 
-  .mobile-action-bar.move-action-bar {
+  .editing-layout > .mobile-action-bar {
     display: flex;
     align-self: start;
     justify-content: flex-end;
@@ -959,12 +955,12 @@ button:disabled {
     pointer-events: none;
   }
 
-  .move-action-bar > :not(.mobile-move-action) {
+  .editing-layout > .mobile-action-bar > :not([aria-pressed="true"]) {
     display: none;
   }
 
-  .move-action-bar .mobile-move-action {
-    width: var(--move-button-width);
+  .editing-layout > .mobile-action-bar > [aria-pressed="true"] {
+    width: var(--mode-button-width);
     min-height: 34px;
     padding: 6px 12px;
     font-size: 13px;
@@ -975,31 +971,28 @@ button:disabled {
     position: static;
     align-self: stretch;
     height: auto;
-  }
-
-  .move-map-panel {
     border: 0;
     border-radius: 0;
     background: transparent;
   }
 
-  .move-map-panel .canvas-frame {
+  .editing-map-panel .canvas-frame {
     place-items: start;
     padding: 0;
     background: transparent;
   }
 
-  .move-map-panel .field-viewport {
+  .editing-map-panel .field-viewport {
     position: relative;
     display: block;
-    --field-width: min(calc(100cqw - var(--move-button-gutter)), calc(100cqh * var(--field-ratio)));
+    --field-width: min(calc(100cqw - var(--mode-button-gutter)), calc(100cqh * var(--field-ratio)));
     width: var(--field-width);
-    margin-inline-start: min(calc((100cqw - var(--field-width)) / 2), calc(100cqw - var(--move-button-gutter) - var(--field-width)));
+    margin-inline-start: min(calc((100cqw - var(--field-width)) / 2), calc(100cqw - var(--mode-button-gutter) - var(--field-width)));
     aspect-ratio: var(--field-ratio);
     overflow: hidden;
   }
 
-  .move-map-panel .field-viewport canvas {
+  .editing-map-panel .field-viewport canvas {
     position: absolute;
     top: var(--map-canvas-top);
     left: var(--map-canvas-left);
