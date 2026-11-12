@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type CSSProperties, type FocusEvent, type MouseEvent, type PointerEvent } from "react";
 import {
   defaultGeneratorConfig,
-  barrierClearsStartBoxes,
   barrierWithinPlacementBounds,
   createBarrier,
   generateMap,
@@ -511,9 +510,7 @@ export function App() {
     const partner = symmetricPartnerOf(original);
     const mirrored = partner ? mirroredBarrierOf(updated, partner) : null;
     if (!barrierWithinPlacementBounds(generated.field, updated)) return;
-    if (!barrierClearsStartBoxes(generated.field, updated)) return;
     if (mirrored && !barrierWithinPlacementBounds(generated.field, mirrored)) return;
-    if (mirrored && !barrierClearsStartBoxes(generated.field, mirrored)) return;
 
     updateEditedBarriers(generated.barriers.map((barrier) => {
       if (barrier.id === updated.id) return updated;
