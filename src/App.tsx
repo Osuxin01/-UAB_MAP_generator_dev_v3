@@ -27,7 +27,6 @@ const PADDING = 92;
 const SCENARIO_SCALE = 2;
 const PARAMETER_MAX = 10;
 const PARAMETER_SCALE = 100 / PARAMETER_MAX;
-const PARAMETER_STEP = 1 / PARAMETER_SCALE;
 
 type ConfigKey = keyof GeneratorConfig;
 type MapPlayer = Pick<Player, "id" | "team" | "x" | "y" | "angle"> & { waypoints?: Point[]; inherited?: boolean };
@@ -115,18 +114,31 @@ const detailConfigFields: { key: ConfigKey; label: string; step: number; min: nu
   { key: "maxAttempts", label: "最大試行回数", step: 50, min: 50, max: 3000 },
 ];
 
+function integerParameterSettings(value: number) {
+  const settings = styleSettings(value);
+  for (const { key } of TACTICAL_FIELDS) {
+    settings[key] = Math.round(settings[key] / PARAMETER_SCALE) * PARAMETER_SCALE;
+  }
+  return settings;
+}
+
+const initialConfig: GeneratorConfig = {
+  ...defaultGeneratorConfig,
+  ...integerParameterSettings(defaultGeneratorConfig.playStyle),
+};
+
 export function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
   const playerDragRef = useRef<PlayerDrag | null>(null);
-  const [config, setConfig] = useState<GeneratorConfig>(defaultGeneratorConfig);
+  const [config, setConfig] = useState<GeneratorConfig>(initialConfig);
   const scoreTuningFields = [...TACTICAL_FIELDS].sort(
     (a, b) => config[a.priorityKey] - config[b.priorityKey],
   );
   const [generated, setGenerated] = useState<GeneratedMap>(() => {
-    const initial = generateMap({ ...defaultGeneratorConfig, minScore: 0 });
-    return { ...initial, accepted: initial.evaluation.score >= defaultGeneratorConfig.minScore };
+    const initial = generateMap({ ...initialConfig, minScore: 0 });
+    return { ...initial, accepted: initial.evaluation.score >= initialConfig.minScore };
   });
   const [error, setError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -224,7 +236,7 @@ export function App() {
   }
 
   function updatePlayStyle(value: number) {
-    setConfig(current => ({ ...current, ...styleSettings(value) }));
+    setConfig((current) => ({ ...current, ...integerParameterSettings(value) }));
   }
 
   function selectedFieldPreset(): string {
@@ -897,7 +909,7 @@ export function App() {
                 type="range"
                 min={0}
                 max={PARAMETER_MAX}
-                step={PARAMETER_STEP}
+                step={1}
                 value={config.playStyle / PARAMETER_SCALE}
                 onChange={(event) => updatePlayStyle(Math.round(event.currentTarget.valueAsNumber * PARAMETER_SCALE))}
                 disabled={isGenerating}
@@ -926,7 +938,7 @@ export function App() {
                           type="range"
                           min={0}
                           max={PARAMETER_MAX}
-                          step={PARAMETER_STEP}
+                          step={1}
                           value={config[field.key] / PARAMETER_SCALE}
                           onChange={(event) => updateConfig(field.key, Math.round(event.currentTarget.valueAsNumber * PARAMETER_SCALE))}
                         />
