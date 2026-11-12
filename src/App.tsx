@@ -25,6 +25,9 @@ const CANVAS_WIDTH = 1100;
 const CANVAS_HEIGHT = 1900;
 const PADDING = 92;
 const SCENARIO_SCALE = 2;
+const PARAMETER_MAX = 10;
+const PARAMETER_SCALE = 100 / PARAMETER_MAX;
+const PARAMETER_STEP = 1 / PARAMETER_SCALE;
 
 type ConfigKey = keyof GeneratorConfig;
 type MapPlayer = Pick<Player, "id" | "team" | "x" | "y" | "angle"> & { waypoints?: Point[]; inherited?: boolean };
@@ -893,16 +896,16 @@ export function App() {
                 id="play-style"
                 type="range"
                 min={0}
-                max={100}
-                step={1}
-                value={config.playStyle}
-                onChange={event => updatePlayStyle(Number(event.target.value))}
+                max={PARAMETER_MAX}
+                step={PARAMETER_STEP}
+                value={config.playStyle / PARAMETER_SCALE}
+                onChange={(event) => updatePlayStyle(Math.round(event.currentTarget.valueAsNumber * PARAMETER_SCALE))}
                 disabled={isGenerating}
                 aria-label="攻め・守り"
-                aria-valuetext={styleLabel(config.playStyle)}
+                aria-valuetext={`${config.playStyle / PARAMETER_SCALE} / ${PARAMETER_MAX} ${styleLabel(config.playStyle)}`}
                 aria-describedby="play-style-help"
               />
-              <p id="play-style-help">{styleLabel(config.playStyle)}：変更すると6項目をまとめて設定します。「生成」でマップに反映します。</p>
+              <p id="play-style-help">{styleLabel(config.playStyle)}（{config.playStyle / PARAMETER_SCALE} / {PARAMETER_MAX}）。変更すると6項目をまとめて設定します。「生成」でマップに反映します。</p>
               <details className="detail-settings">
                 <summary>詳細設定</summary>
                 <div className="score-settings nested">
@@ -915,17 +918,17 @@ export function App() {
                       <div className="tuning-row" key={field.key}>
                         <span className="tuning-head">
                           <span>{field.label}</span>
-                          <strong>{config[field.key]}</strong>
+                          <strong>{config[field.key] / PARAMETER_SCALE}</strong>
                         </span>
                         <span className="parameter-description">{field.description}</span>
                         <input
                           aria-label={field.label}
                           type="range"
                           min={0}
-                          max={100}
-                          step={1}
-                          value={config[field.key]}
-                          onChange={(event) => handleConfigNumberChange(field.key, event)}
+                          max={PARAMETER_MAX}
+                          step={PARAMETER_STEP}
+                          value={config[field.key] / PARAMETER_SCALE}
+                          onChange={(event) => updateConfig(field.key, Math.round(event.currentTarget.valueAsNumber * PARAMETER_SCALE))}
                         />
                         <span className="tuning-foot">
                           <span>{tuningText(field, Number(config[field.key]))}</span>
