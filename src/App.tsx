@@ -1163,17 +1163,22 @@ export function App() {
         <div className={`mobile-edit-bar${mode === "move" ? " mobile-move-controls" : ""}`}>
           {mode === "move" && (
             <div className="mobile-move-toolbar">
-              {!moveControlsPinned && (
-                <button type="button" className="secondary-button" aria-expanded={moveControlsExpanded} aria-controls="mobile-move-options" onClick={() => setMoveControlsOpen((open) => !open)}>
-                  {moveControlsExpanded ? "操作を閉じる" : "操作を開く"}
-                </button>
-              )}
               {moveControlsExpanded && (
                 <button type="button" className="secondary-button" onClick={() => updateMoveControlsPinned(!moveControlsPinned)}>
                   {moveControlsPinned ? "折りたたみ式に戻す" : "常に表示"}
                 </button>
               )}
               {!moveControlsExpanded && selectionLabel !== "未選択" && <span role="status">{selectionLabel}</span>}
+              {!moveControlsPinned && (
+                <button
+                  type="button"
+                  className="secondary-button mobile-move-toggle"
+                  aria-label={moveControlsExpanded ? "操作を閉じる" : "操作を開く"}
+                  aria-expanded={moveControlsExpanded}
+                  aria-controls="mobile-move-options"
+                  onClick={() => setMoveControlsOpen((open) => !open)}
+                />
+              )}
             </div>
           )}
           <div className="mobile-edit-options" id={mode === "move" ? "mobile-move-options" : undefined} hidden={mode === "move" && !moveControlsExpanded}>
