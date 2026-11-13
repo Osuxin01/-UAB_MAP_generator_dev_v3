@@ -1075,6 +1075,11 @@ button:disabled {
     gap: 4px;
   }
 
+  .mobile-barrier-movement {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
   .mobile-map-group .route-controls button:not(.secondary-button) {
     border-radius: 6px;
     background: #e7eef2;

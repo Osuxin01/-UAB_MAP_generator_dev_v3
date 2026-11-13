@@ -940,10 +940,6 @@ export function App() {
                 <p className="selected-label" aria-live="polite">{selectionLabel}</p>
                 {pivotSelect}
                 <div className="mobile-barrier-adjustments">
-                  <button type="button" aria-label="左に移動" onClick={() => moveSelected(-0.5, 0)} disabled={!canMoveSelection}>←</button>
-                  <button type="button" aria-label="上に移動" onClick={() => moveSelected(0, 0.5)} disabled={!canMoveSelection}>↑</button>
-                  <button type="button" aria-label="下に移動" onClick={() => moveSelected(0, -0.5)} disabled={!canMoveSelection}>↓</button>
-                  <button type="button" aria-label="右に移動" onClick={() => moveSelected(0.5, 0)} disabled={!canMoveSelection}>→</button>
                   {rotationControls}
                 </div>
                 <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
@@ -1225,6 +1221,14 @@ export function App() {
         </section>
       </section>
 
+      {mode === "edit" && (
+        <div className="mobile-edit-bar mobile-barrier-movement" role="group" aria-label="バリケードの移動">
+          <button className="secondary-button" type="button" aria-label="左に移動" onClick={() => moveSelected(-0.5, 0)} disabled={!canMoveSelection}>←</button>
+          <button className="secondary-button" type="button" aria-label="上に移動" onClick={() => moveSelected(0, 0.5)} disabled={!canMoveSelection}>↑</button>
+          <button className="secondary-button" type="button" aria-label="下に移動" onClick={() => moveSelected(0, -0.5)} disabled={!canMoveSelection}>↓</button>
+          <button className="secondary-button" type="button" aria-label="右に移動" onClick={() => moveSelected(0.5, 0)} disabled={!canMoveSelection}>→</button>
+        </div>
+      )}
       {mode === "move" && (
         <div className="mobile-edit-bar mobile-move-controls">
           <div className="mobile-move-toolbar">
