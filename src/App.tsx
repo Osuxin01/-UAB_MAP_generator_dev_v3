@@ -83,6 +83,7 @@ const PLAYER_RADIUS = 0.3;
 const ROUTE_POINT_SPACING = 0.04;
 const ROUTE_SPEED = 2;
 const SHOT_DISPLAY_MS = 1500;
+const MOBILE_MOVE_CONTROLS_STORAGE_KEY = "uab-mobile-move-controls-pinned";
 
 const FIELD_PRESETS = [
   { key: "custom", label: "カスタム", width: null, height: null },
@@ -145,6 +146,14 @@ export function App() {
   const generationRun = useRef({ active: false, id: 0 });
   const isGenerating = generation !== null;
   const [mode, setMode] = useState<MapMode>("preview");
+  const [moveControlsOpen, setMoveControlsOpen] = useState(false);
+  const [moveControlsPinned, setMoveControlsPinned] = useState(() => {
+    try {
+      return window.localStorage.getItem(MOBILE_MOVE_CONTROLS_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
   const [scenes, setScenes] = useState<Scene[]>([{ players: [], shotLines: [] }]);
   const [sceneIndex, setSceneIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -162,6 +171,7 @@ export function App() {
   const displayedSceneIndex = playbackFrame?.sceneIndex ?? playback?.[0] ?? sceneIndex;
   const displayedScene = resolvedScenes[displayedSceneIndex];
   const isEditing = mode !== "preview";
+  const moveControlsExpanded = moveControlsPinned || moveControlsOpen;
   const selectedBarrier = mode === "edit" ? generated.barriers.find((barrier) => barrier.id === selectedId) : undefined;
   const selectedPlayer = mode === "move" ? players.find((player) => player.id === selectedId) : undefined;
   const selectedWaypoints = selectedPlayer?.waypoints;
@@ -436,10 +446,21 @@ export function App() {
   function toggleMode(nextMode: "edit" | "move") {
     resetRouteInteraction();
     setMode(mode === nextMode ? "preview" : nextMode);
+    setMoveControlsOpen(false);
     setSelectedId(null);
     setSelectedVertexIndex(0);
     setPlacingTeam(null);
     setSettingsOpen(false);
+  }
+
+  function updateMoveControlsPinned(pinned: boolean) {
+    setMoveControlsOpen(true);
+    setMoveControlsPinned(pinned);
+    try {
+      window.localStorage.setItem(MOBILE_MOVE_CONTROLS_STORAGE_KEY, String(pinned));
+    } catch {
+      // The preference still applies for this page when storage is unavailable.
+    }
   }
 
   function stopPlayback() {
@@ -1140,40 +1161,57 @@ export function App() {
 
       {isEditing && (
         <div className={`mobile-edit-bar${mode === "move" ? " mobile-move-controls" : ""}`}>
-          {sceneControls}
-          <div className="mobile-edit-status">
-            <strong aria-live="polite">{selectionLabel}</strong>
-            {selectedBarrier && (
-              <select
-                value={selectedPivotIndex(selectedBarrier)}
-                onChange={(event) => setSelectedVertexIndex(Number(event.target.value))}
-              >
-                {selectedBarrier.polygon.map((_, index) => (
-                  <option key={index} value={index}>
-                    頂点 {index + 1}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-          {mode === "edit" && (
-            <div className="mobile-edit-controls">
-              <button type="button" onClick={() => moveSelected(-0.5, 0)} disabled={!canMoveSelection}>←</button>
-              <button type="button" onClick={() => moveSelected(0, 0.5)} disabled={!canMoveSelection}>↑</button>
-              <button type="button" onClick={() => moveSelected(0, -0.5)} disabled={!canMoveSelection}>↓</button>
-              <button type="button" onClick={() => moveSelected(0.5, 0)} disabled={!canMoveSelection}>→</button>
-              {rotationControls}
-              <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
+          {mode === "move" && (
+            <div className="mobile-move-toolbar">
+              {!moveControlsPinned && (
+                <button type="button" className="secondary-button" aria-expanded={moveControlsExpanded} aria-controls="mobile-move-options" onClick={() => setMoveControlsOpen((open) => !open)}>
+                  {moveControlsExpanded ? "操作を閉じる" : "操作を開く"}
+                </button>
+              )}
+              {moveControlsExpanded && (
+                <button type="button" className="secondary-button" onClick={() => updateMoveControlsPinned(!moveControlsPinned)}>
+                  {moveControlsPinned ? "折りたたみ式に戻す" : "常に表示"}
+                </button>
+              )}
+              {!moveControlsExpanded && selectionLabel !== "未選択" && <span role="status">{selectionLabel}</span>}
             </div>
           )}
-          <div className="mobile-add-row">
-            {addControls}
-            {mode === "move" && (
-              <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
+          <div className="mobile-edit-options" id={mode === "move" ? "mobile-move-options" : undefined} hidden={mode === "move" && !moveControlsExpanded}>
+            {sceneControls}
+            <div className="mobile-edit-status">
+              <strong aria-live="polite">{selectionLabel}</strong>
+              {selectedBarrier && (
+                <select
+                  value={selectedPivotIndex(selectedBarrier)}
+                  onChange={(event) => setSelectedVertexIndex(Number(event.target.value))}
+                >
+                  {selectedBarrier.polygon.map((_, index) => (
+                    <option key={index} value={index}>
+                      頂点 {index + 1}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {mode === "edit" && (
+              <div className="mobile-edit-controls">
+                <button type="button" onClick={() => moveSelected(-0.5, 0)} disabled={!canMoveSelection}>←</button>
+                <button type="button" onClick={() => moveSelected(0, 0.5)} disabled={!canMoveSelection}>↑</button>
+                <button type="button" onClick={() => moveSelected(0, -0.5)} disabled={!canMoveSelection}>↓</button>
+                <button type="button" onClick={() => moveSelected(0.5, 0)} disabled={!canMoveSelection}>→</button>
+                {rotationControls}
+                <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
+              </div>
             )}
+            <div className="mobile-add-row">
+              {addControls}
+              {mode === "move" && (
+                <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
+              )}
+            </div>
+            {routeControls}
+            {shotControls}
           </div>
-          {routeControls}
-          {shotControls}
         </div>
       )}
     </main>

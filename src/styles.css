@@ -805,6 +805,11 @@ button:disabled {
     align-items: center;
   }
 
+  .mobile-edit-options:not([hidden]) {
+    display: grid;
+    gap: inherit;
+  }
+
   .mobile-edit-status strong {
     overflow: hidden;
     color: #405568;
@@ -836,7 +841,28 @@ button:disabled {
 
   .mobile-move-controls {
     gap: 5px;
+    max-height: calc(100dvh - 96px);
+    overflow-y: auto;
     padding: 6px;
+  }
+
+  .mobile-move-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 8px;
+  }
+
+  .mobile-move-toolbar button {
+    width: auto;
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .mobile-move-toolbar span {
+    color: #405568;
+    font-size: 13px;
   }
 
   .mobile-move-controls .mobile-add-row {
