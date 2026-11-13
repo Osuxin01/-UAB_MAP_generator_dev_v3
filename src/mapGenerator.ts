@@ -112,7 +112,7 @@ export function validateConfig(config: GeneratorConfig): string | null {
   return null;
 }
 
-export function generateMap(config: GeneratorConfig, index = 1): GeneratedMap {
+export function generateMap(config: GeneratorConfig, index = 1, onAttempt?: (attempt: number) => void): GeneratedMap {
   const validation = validateConfig(config);
   if (validation) throw new Error(validation);
   const starts = startPointsForField(config.fieldWidth, config.fieldHeight);
@@ -131,6 +131,7 @@ export function generateMap(config: GeneratorConfig, index = 1): GeneratedMap {
   const comparisonPool = config.minScore === 0 ? 1 : Math.min(12, config.maxAttempts);
 
   for (let attempt = 1; attempt <= config.maxAttempts; attempt += 1) {
+    onAttempt?.(attempt);
     const barriers = placeBarriers(field, shapeCounts);
     if (barriers.length !== expectedCount) continue;
     const evaluation = evaluateMap(field, barriers, config);

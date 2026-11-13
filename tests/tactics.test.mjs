@@ -117,9 +117,23 @@ test('generation worker returns successful maps and validation failures', async 
  const source=await build({entryPoints:['src/generateMap.worker.ts'],bundle:true,write:false,platform:'node',format:'cjs'});
  const worker=new Worker('const {parentPort}=require("node:worker_threads"); globalThis.self={postMessage:data=>parentPort.postMessage(data)}; '+source.outputFiles[0].text+'; parentPort.on("message",data=>self.onmessage({data}));',{eval:true});
  try {
-   const success=once(worker,'message');
+   const attempts=[];
+   const success=new Promise(resolve=>{
+     function onMessage(message) {
+       if (message.type==='progress') {
+         attempts.push(message.attempt);
+         return;
+       }
+       worker.off('message',onMessage);
+       resolve(message);
+     }
+     worker.on('message',onMessage);
+   });
    worker.postMessage({...m.defaultGeneratorConfig,minScore:0,maxAttempts:50});
-   const [result]=await success;
+   const result=await success;
+   assert.equal(result.type,'success');
+   assert.equal(attempts[0],1);
+   assert.ok(attempts.every((attempt,index)=>attempt<=50 && (index===0 || attempt>attempts[index-1])));
    assert.equal(result.map.barriers.length,10);
    assert.equal(Object.keys(result.map.evaluation.details).length,6);
    const failure=once(worker,'message');

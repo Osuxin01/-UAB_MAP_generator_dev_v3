@@ -141,7 +141,9 @@ export function App() {
   });
   const [error, setError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [generation, setGeneration] = useState<{ attempt: number; maxAttempts: number } | null>(null);
+  const generationRun = useRef({ active: false, id: 0 });
+  const isGenerating = generation !== null;
   const [mode, setMode] = useState<MapMode>("preview");
   const [scenes, setScenes] = useState<Scene[]>([{ players: [], shotLines: [] }]);
   const [sceneIndex, setSceneIndex] = useState(0);
@@ -164,7 +166,7 @@ export function App() {
   const selectedPlayer = mode === "move" ? players.find((player) => player.id === selectedId) : undefined;
   const selectedWaypoints = selectedPlayer?.waypoints;
   const hasRoutes = players.some((player) => player.waypoints?.length);
-  const canEditSelection = Boolean(selectedId) && !playback && draftWaypoints === null;
+  const canEditSelection = Boolean(selectedId) && !isGenerating && !playback && draftWaypoints === null;
   const canMoveSelection = canEditSelection && !previousPlayers?.some((player) => player.id === selectedPlayer?.id);
   const showingArrivalShots = Boolean(playbackFrame?.movementFinished && displayedScene.shotLines.length);
   const selectionLabel = playback ? `シーン${displayedSceneIndex + 1}・${showingArrivalShots ? "射線を表示中" : "再生中"}`
@@ -231,10 +233,12 @@ export function App() {
   }, [canMoveSelection, mode, selectedId, selectedVertexIndex, generated, config, players]);
 
   function updateConfig(key: ConfigKey, value: number) {
+    if (generationRun.current.active) return;
     setConfig((current) => ({ ...current, [key]: value }));
   }
 
   function updatePlayStyle(value: number) {
+    if (generationRun.current.active) return;
     setConfig((current) => ({ ...current, ...integerParameterSettings(value) }));
   }
 
@@ -249,6 +253,7 @@ export function App() {
   }
 
   function applyFieldPreset(presetKey: string) {
+    if (generationRun.current.active) return;
     const preset = FIELD_PRESETS.find((candidate) => candidate.key === presetKey);
     if (!preset || preset.width === null || preset.height === null) return;
     setConfig((current) => ({
@@ -282,12 +287,16 @@ export function App() {
   }
 
   async function handleGenerate() {
-    setIsGenerating(true);
+    if (generationRun.current.active) return;
+    generationRun.current.active = true;
+    generationRun.current.id += 1;
+    const settings = { ...config };
+    const { maxAttempts } = settings;
+    setGeneration({ attempt: 0, maxAttempts });
     resetRouteInteraction();
     setError(null);
-    await new Promise((resolve) => window.setTimeout(resolve, 30));
     try {
-      const next = await generateMapInWorker(config);
+      const next = await generateMapInWorker(settings, (attempt) => setGeneration({ attempt, maxAttempts }));
       setGenerated(next);
       setScenes([{ players: [], shotLines: [] }]);
       setSceneIndex(0);
@@ -298,7 +307,8 @@ export function App() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "生成に失敗しました。");
     } finally {
-      setIsGenerating(false);
+      generationRun.current.active = false;
+      setGeneration(null);
     }
   }
 
@@ -371,10 +381,13 @@ export function App() {
   async function handleImportJson(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
-    if (!file) return;
+    if (!file || generationRun.current.active) return;
+    const runId = generationRun.current.id;
 
     try {
-      const imported = JSON.parse(await file.text()) as ImportedScenarioFile;
+      const raw = await file.text();
+      if (generationRun.current.id !== runId) return;
+      const imported = JSON.parse(raw) as ImportedScenarioFile;
       const field = imported.scenario?.field;
       if (!field || !Array.isArray(field.barriers)) throw new Error("field.barriers が見つかりません。");
 
@@ -415,7 +428,8 @@ export function App() {
       setSelectedVertexIndex(0);
       setError(null);
     } catch (caught) {
-      setError(caught instanceof Error ? `JSONインポートに失敗しました: ${caught.message}` : "JSONインポートに失敗しました。");
+      if (generationRun.current.id !== runId) return;
+      setError(caught instanceof Error ? `ファイルを開けませんでした。${caught.message}` : "ファイルを開けませんでした。");
     }
   }
 
@@ -592,6 +606,7 @@ export function App() {
   }
 
   function handleCanvasPointerDown(event: PointerEvent<HTMLCanvasElement>) {
+    if (isGenerating) return;
     if (mode !== "move" || placingTeam || shotDraft || playback || !event.isPrimary || event.button !== 0 || playerDragRef.current) return;
     const point = canvasEventPoint(event);
     const player = [...players].reverse().find((candidate) => pointDistance(point, candidate) <= PLAYER_RADIUS);
@@ -637,6 +652,7 @@ export function App() {
   }
 
   function handleCanvasClick(event: MouseEvent<HTMLCanvasElement>) {
+    if (isGenerating) return;
     if (!isEditing) return;
     const world = canvasEventPoint(event);
     if (mode === "move" && shotDraft) {
@@ -814,6 +830,32 @@ export function App() {
     return total;
   }, {});
   const fieldViewportStyle = isEditing ? getFieldViewportStyle(generated.field) : undefined;
+  const mapActions = (
+    <>
+      <button className="primary-button mobile-generate-action" type="button" onClick={handleGenerate} disabled={isGenerating}>
+        {isGenerating ? "生成中…" : "生成"}
+      </button>
+      <button className="secondary-button mobile-save-action" type="button" onClick={handleDownload} disabled={isGenerating}>
+        画像保存
+      </button>
+      <button className={`secondary-button mobile-edit-action ${mode === "edit" ? "active-button" : ""}`} type="button" aria-pressed={mode === "edit"} onClick={() => toggleMode("edit")} disabled={isGenerating}>
+        編集
+      </button>
+      <button className={`secondary-button mobile-move-action ${mode === "move" ? "active-button" : ""}`} type="button" aria-pressed={mode === "move"} onClick={() => toggleMode("move")} disabled={isGenerating}>
+        ムーブ
+      </button>
+    </>
+  );
+  const generationProgress = generation && (
+    <>
+      <div className="spinner" aria-hidden="true" />
+      <strong>マップを生成中</strong>
+      <span>{generation.attempt > 0 ? `最大${generation.maxAttempts}回のうち${generation.attempt}回目を処理中` : "設定を確認しています"}</span>
+      {generation.maxAttempts > 0 && (
+        <progress aria-label="マップ生成の試行回数" max={generation.maxAttempts} value={generation.attempt} />
+      )}
+    </>
+  );
 
   return (
     <main className={`app-shell${isEditing ? " editing-layout" : ""}`}>
@@ -841,18 +883,7 @@ export function App() {
           <span />
           <span />
         </button>
-        <button className="primary-button mobile-generate-action" type="button" onClick={handleGenerate} disabled={isGenerating}>
-          {isGenerating ? "生成中..." : "生成"}
-        </button>
-        <button className="secondary-button mobile-save-action" type="button" onClick={handleDownload} disabled={isGenerating}>
-          PNG保存
-        </button>
-        <button className={`secondary-button mobile-edit-action ${mode === "edit" ? "active-button" : ""}`} type="button" aria-pressed={mode === "edit"} onClick={() => toggleMode("edit")} disabled={isGenerating}>
-          編集
-        </button>
-        <button className={`secondary-button mobile-move-action ${mode === "move" ? "active-button" : ""}`} type="button" aria-pressed={mode === "move"} onClick={() => toggleMode("move")} disabled={isGenerating}>
-          ムーブ
-        </button>
+        {mapActions}
       </div>
 
       <section className="generator-layout">
@@ -860,10 +891,19 @@ export function App() {
         <aside className={`settings-panel ${settingsOpen ? "open" : ""}`} aria-label="マップ設定">
           <div className="panel-head">
             <h2>設定</h2>
-            <button className="primary-button" type="button" onClick={handleGenerate} disabled={isGenerating}>
-              {isGenerating ? "生成中..." : "生成"}
-            </button>
           </div>
+          <div className="mode-buttons">{mapActions}</div>
+          <p className="mode-help">ムーブでは、プレイヤーの配置、移動経路や射線の描画、シーンの再生ができます。</p>
+          <div className="file-actions" role="group" aria-label="編集用ファイル">
+            <button className="secondary-button" type="button" disabled={isGenerating} onClick={() => importInputRef.current?.click()}>
+              ファイルを開く
+            </button>
+            <button className="secondary-button" type="button" disabled={isGenerating} onClick={handleExportJson}>
+              ファイル保存
+            </button>
+            <input ref={importInputRef} type="file" accept="application/json,.json" disabled={isGenerating} onChange={handleImportJson} />
+          </div>
+          {settingsOpen && generationProgress && <div className="generating-progress drawer-progress">{generationProgress}</div>}
 
           <div className="score-settings">
             <div>
@@ -873,7 +913,7 @@ export function App() {
             <div className="settings-grid">
               <label className="input-row">
                 <span>マッププリセット</span>
-                <select value={selectedFieldPreset()} onChange={(event) => applyFieldPreset(event.target.value)}>
+                <select value={selectedFieldPreset()} disabled={isGenerating} onChange={(event) => applyFieldPreset(event.target.value)}>
                   {FIELD_PRESETS.map((preset) => (
                     <option key={preset.key} value={preset.key}>
                       {preset.label}
@@ -881,20 +921,6 @@ export function App() {
                   ))}
                 </select>
               </label>
-              <div className="json-actions">
-                <button className="secondary-button" type="button" onClick={() => importInputRef.current?.click()}>
-                  JSON読込
-                </button>
-                <button className="secondary-button" type="button" onClick={handleExportJson}>
-                  JSON保存
-                </button>
-                <input
-                  ref={importInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  onChange={handleImportJson}
-                />
-              </div>
             </div>
             <div className="play-style-control">
               <label className="play-style-axis" htmlFor="play-style">
@@ -936,6 +962,7 @@ export function App() {
                           min={0}
                           max={PARAMETER_MAX}
                           step={1}
+                          disabled={isGenerating}
                           value={config[field.key] / PARAMETER_SCALE}
                           onChange={(event) => updateConfig(field.key, Math.round(event.currentTarget.valueAsNumber * PARAMETER_SCALE))}
                         />
@@ -963,16 +990,8 @@ export function App() {
             </div>
           </div>
 
-          <div className="edit-settings">
-            <div className="mode-buttons">
-              <button className={`secondary-button ${mode === "edit" ? "active-button" : ""}`} type="button" aria-pressed={mode === "edit"} onClick={() => toggleMode("edit")} disabled={isGenerating}>
-                編集モード
-              </button>
-              <button className={`secondary-button ${mode === "move" ? "active-button" : ""}`} type="button" aria-pressed={mode === "move"} onClick={() => toggleMode("move")} disabled={isGenerating}>
-                ムーブモード
-              </button>
-            </div>
-            {isEditing && (
+          {isEditing && (
+            <div className="edit-settings">
               <div className="edit-tools">
                 {sceneControls}
                 <p className="selected-label" aria-live="polite">{selectionLabel}</p>
@@ -1011,8 +1030,8 @@ export function App() {
                 {routeControls}
                 {shotControls}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <details className="detail-settings">
             <summary>マップ・生成設定</summary>
@@ -1022,6 +1041,7 @@ export function App() {
                   <span>{field.label}</span>
                   <input
                     type="number"
+                    disabled={isGenerating}
                     min={field.min}
                     max={field.max}
                     step={field.step}
@@ -1036,6 +1056,7 @@ export function App() {
                   <span>{field.label}</span>
                   <input
                     type="number"
+                    disabled={isGenerating}
                     min={field.min}
                     max={field.max}
                     step={field.step}
@@ -1049,16 +1070,12 @@ export function App() {
 
           </details>
 
-          {error && <p className="error-message">{error}</p>}
+          {error && <p className="error-message settings-error" role={settingsOpen ? "alert" : undefined}>{error}</p>}
           {!generated.accepted && (
             <p className="warning-message">
               採用スコア未達です。最良候補を表示しています。
             </p>
           )}
-
-          <button className="secondary-button" type="button" onClick={handleDownload} disabled={isGenerating}>
-            PNG保存
-          </button>
 
           <div className="summary-panel">
             <p>{generated.accepted ? "採用条件を満たしています。" : `採用スコア ${config.minScore} に未達です。`}</p>
@@ -1098,13 +1115,8 @@ export function App() {
             </div>
           </div>
           <div className="canvas-frame">
-            {isGenerating && (
-              <div className="generating-overlay" role="status" aria-live="polite">
-                <div className="spinner" />
-                <strong>生成中...</strong>
-                <span>条件に合うマップを探しています</span>
-              </div>
-            )}
+            {generationProgress && <div className="generating-progress generating-overlay">{generationProgress}</div>}
+            {error && !settingsOpen && <p className="error-message mobile-generation-error" role="alert">{error}</p>}
             <div className="field-viewport" style={fieldViewportStyle}>
               <canvas
                 key={isEditing ? "edit" : "preview"}

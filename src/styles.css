@@ -187,13 +187,13 @@ button:disabled {
   font-weight: 800;
 }
 
-.json-actions {
+.file-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.json-actions input {
+.file-actions input {
   display: none;
 }
 
@@ -298,6 +298,12 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.mode-help {
+  margin: 0;
+  color: #526775;
+  font-size: 12px;
 }
 
 .selected-label {
@@ -597,14 +603,33 @@ button:disabled {
   backdrop-filter: blur(3px);
 }
 
-.generating-overlay strong {
+.generating-progress strong {
   font-size: 18px;
 }
 
-.generating-overlay span {
+.generating-progress span {
   color: #607482;
   font-size: 13px;
   font-weight: 700;
+}
+
+.generating-progress progress {
+  width: min(80%, 220px);
+  accent-color: #2c8f7b;
+}
+
+.drawer-progress {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 12px;
+  text-align: center;
+  background: #eef3f5;
+  border-radius: 8px;
+}
+
+.mobile-generation-error {
+  display: none;
 }
 
 .spinner {
@@ -660,6 +685,14 @@ button:disabled {
 }
 
 @media (max-width: 720px) {
+  .mobile-generation-error {
+    display: block;
+    position: absolute;
+    inset: 8px 8px auto;
+    z-index: 10;
+    margin: 0;
+  }
+
   .app-shell {
     grid-template-rows: auto auto minmax(0, 1fr);
   }
