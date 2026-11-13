@@ -1073,6 +1073,34 @@ button:disabled {
     pointer-events: auto;
   }
 
+  .movement-layout > .mobile-action-bar {
+    display: grid;
+    grid-template-columns: var(--mode-button-width);
+    grid-template-areas: none;
+    gap: 6px;
+  }
+
+  .movement-layout > .mobile-action-bar > .mobile-move-action,
+  .movement-layout > .mobile-action-bar > .mobile-playback-controls {
+    grid-area: auto;
+  }
+
+  .movement-layout > .mobile-action-bar > .mobile-playback-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    pointer-events: auto;
+  }
+
+  .mobile-playback-controls select,
+  .movement-layout .mobile-playback-controls .secondary-button {
+    min-height: 36px;
+    padding: 6px 4px;
+  }
+
+  .mobile-route-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .editing-map-panel {
     position: static;
     align-self: stretch;

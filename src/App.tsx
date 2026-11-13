@@ -714,32 +714,51 @@ export function App() {
     </>
   );
 
+  const sceneSelect = (
+    <select
+      aria-label="シーンを選択"
+      value={displayedSceneIndex}
+      disabled={Boolean(playback) || draftWaypoints !== null || isGenerating}
+      onChange={(event) => selectScene(Number(event.currentTarget.value))}
+    >
+      {scenes.map((_, index) => <option key={index} value={index}>シーン{index + 1}</option>)}
+    </select>
+  );
+  const addSceneButton = (
+    <button className="secondary-button" type="button" onClick={addScene} disabled={Boolean(playback) || draftWaypoints !== null || isGenerating}>
+      シーンを追加
+    </button>
+  );
+  const playAllScenesButton = (compact = false) => (
+    <button
+      className="secondary-button"
+      type="button"
+      disabled={scenes.length < 2 || Boolean(playback) || draftWaypoints !== null || isGenerating}
+      onClick={() => startScenePlayback(scenes.map((_, index) => index))}
+    >
+      {compact ? "全シーン再生" : "全シーンを再生"}
+    </button>
+  );
+  const playSceneButton = (compact = false) => (
+    <button
+      className="secondary-button"
+      type="button"
+      disabled={(!playback && !hasRoutes && !shotLines.length) || draftWaypoints !== null || isGenerating}
+      onClick={() => playback ? stopPlayback() : startScenePlayback([sceneIndex])}
+    >
+      {playback ? "停止" : compact ? "シーン再生" : "このシーンを再生"}
+    </button>
+  );
   const sceneControls = mode === "move" && (
     <div className="route-controls">
-      <select
-        aria-label="シーンを選択"
-        value={displayedSceneIndex}
-        disabled={Boolean(playback) || draftWaypoints !== null || isGenerating}
-        onChange={(event) => selectScene(Number(event.currentTarget.value))}
-      >
-        {scenes.map((_, index) => <option key={index} value={index}>シーン{index + 1}</option>)}
-      </select>
-      <button className="secondary-button" type="button" onClick={addScene} disabled={Boolean(playback) || draftWaypoints !== null || isGenerating}>
-        シーンを追加
-      </button>
-      <button
-        className="secondary-button"
-        type="button"
-        disabled={scenes.length < 2 || Boolean(playback) || draftWaypoints !== null || isGenerating}
-        onClick={() => startScenePlayback(scenes.map((_, index) => index))}
-      >
-        全シーンを再生
-      </button>
+      {sceneSelect}
+      {addSceneButton}
+      {playAllScenesButton()}
     </div>
   );
 
-  const routeControls = mode === "move" && (
-    <div className="route-controls">
+  const routeControls = (includePlayback: boolean) => mode === "move" && (
+    <div className={`route-controls${includePlayback ? "" : " mobile-route-controls"}`}>
       <button
         className="secondary-button"
         type="button"
@@ -753,20 +772,7 @@ export function App() {
       >
         経路を描く
       </button>
-      <button
-        className="secondary-button"
-        type="button"
-        disabled={(!playback && !hasRoutes && !shotLines.length) || draftWaypoints !== null || isGenerating}
-        onClick={() => {
-          if (playback) {
-            stopPlayback();
-          } else {
-            startScenePlayback([sceneIndex]);
-          }
-        }}
-      >
-        {playback ? "停止" : "このシーンを再生"}
-      </button>
+      {includePlayback && playSceneButton()}
       <button
         className="secondary-button"
         type="button"
@@ -905,6 +911,13 @@ export function App() {
           <span />
         </button>
         {mapActions}
+        {mode === "move" && (
+          <div className="route-controls mobile-playback-controls" role="group" aria-label="シーンの再生">
+            {sceneSelect}
+            {playSceneButton(true)}
+            {playAllScenesButton(true)}
+          </div>
+        )}
       </div>
 
       <section className="generator-layout">
@@ -1048,7 +1061,7 @@ export function App() {
                 <div className={mode === "move" ? "add-row player-add-row" : "add-row"}>
                   {addControls}
                 </div>
-                {routeControls}
+                {routeControls(true)}
                 {shotControls}
               </div>
             </div>
@@ -1182,7 +1195,7 @@ export function App() {
             </div>
           )}
           <div className="mobile-edit-options" id={mode === "move" ? "mobile-move-options" : undefined} hidden={mode === "move" && !moveControlsExpanded}>
-            {sceneControls}
+            {mode === "move" && <div className="route-controls">{addSceneButton}</div>}
             <div className="mobile-edit-status">
               <strong aria-live="polite">{selectionLabel}</strong>
               {selectedBarrier && (
@@ -1214,7 +1227,7 @@ export function App() {
                 <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
               )}
             </div>
-            {routeControls}
+            {routeControls(false)}
             {shotControls}
           </div>
         </div>
