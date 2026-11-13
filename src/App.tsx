@@ -784,13 +784,14 @@ export function App() {
     </div>
   );
 
-  const shotControls = mode === "move" && (
-    <div className="route-controls" aria-label="射線">
+  const shotControls = (compact = false) => mode === "move" && (
+    <div className="route-controls" role="group" aria-label="射線">
       {(["ally", "enemy"] as const).map((team) => (
         <button
           key={team}
           className="secondary-button"
           type="button"
+          aria-label={`${TEAM_LABELS[team]}の射線`}
           aria-pressed={shotDraft?.team === team}
           disabled={Boolean(playback) || draftWaypoints !== null || isGenerating}
           onClick={() => {
@@ -800,7 +801,7 @@ export function App() {
             setShotDraft(shotDraft?.team === team ? null : { team, start: null });
           }}
         >
-          {TEAM_LABELS[team]}の射線
+          {compact ? TEAM_LABELS[team] : `${TEAM_LABELS[team]}の射線`}
         </button>
       ))}
       <button
@@ -809,7 +810,7 @@ export function App() {
         disabled={!shotLines.length || Boolean(playback) || isGenerating}
         onClick={() => setShotLines((current) => current.slice(0, -1))}
       >
-        射線を1本戻す
+        {compact ? "1本戻す" : "射線を1本戻す"}
       </button>
     </div>
   );
@@ -930,6 +931,10 @@ export function App() {
                 {addPlayerControls(true)}
                 <button type="button" className="secondary-button danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
               </div>
+            </details>
+            <details className="mobile-move-group">
+              <summary>射線</summary>
+              {shotControls(true)}
             </details>
           </>
         )}
@@ -1077,7 +1082,7 @@ export function App() {
                   {mode === "move" ? addPlayerControls() : addBarrierControls}
                 </div>
                 {routeControls(true)}
-                {shotControls}
+                {shotControls()}
               </div>
             </div>
           )}
@@ -1237,7 +1242,6 @@ export function App() {
             )}
             {mode === "edit" && <div className="mobile-add-row">{addBarrierControls}</div>}
             {routeControls(false)}
-            {shotControls}
           </div>
         </div>
       )}
