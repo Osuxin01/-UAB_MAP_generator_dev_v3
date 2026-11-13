@@ -967,6 +967,10 @@ button:disabled {
     display: none;
   }
 
+  .editing-layout.movement-layout {
+    --mode-button-width: 90px;
+  }
+
   .editing-layout .mobile-action-bar,
   .editing-layout .mobile-edit-bar {
     position: static;

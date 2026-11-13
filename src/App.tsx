@@ -842,7 +842,7 @@ export function App() {
         編集
       </button>
       <button className={`secondary-button mobile-move-action ${mode === "move" ? "active-button" : ""}`} type="button" aria-pressed={mode === "move"} onClick={() => toggleMode("move")} disabled={isGenerating}>
-        ムーブ
+        動きの確認
       </button>
     </>
   );
@@ -858,7 +858,7 @@ export function App() {
   );
 
   return (
-    <main className={`app-shell${isEditing ? " editing-layout" : ""}`}>
+    <main className={`app-shell${isEditing ? " editing-layout" : ""}${mode === "move" ? " movement-layout" : ""}`}>
       <header className="app-header">
         <div>
           <h1>UABマップ自動生成ツール</h1>
@@ -893,7 +893,7 @@ export function App() {
             <h2>設定</h2>
           </div>
           <div className="mode-buttons">{mapActions}</div>
-          <p className="mode-help">ムーブでは、プレイヤーの配置、移動経路や射線の描画、シーンの再生ができます。</p>
+          <p className="mode-help">「動きの確認」では、プレイヤーの配置、移動経路や射線の描画、シーンの再生ができます。</p>
           <div className="file-actions" role="group" aria-label="編集用ファイル">
             <button className="secondary-button" type="button" disabled={isGenerating} onClick={() => importInputRef.current?.click()}>
               ファイルを開く
