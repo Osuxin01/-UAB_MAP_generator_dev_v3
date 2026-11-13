@@ -714,6 +714,18 @@ export function App() {
     </>
   );
 
+  const pivotSelect = selectedBarrier && (
+    <select
+      aria-label="基準頂点"
+      value={selectedPivotIndex(selectedBarrier)}
+      onChange={(event) => setSelectedVertexIndex(Number(event.target.value))}
+    >
+      {selectedBarrier.polygon.map((_, index) => (
+        <option key={index} value={index}>頂点 {index + 1}</option>
+      ))}
+    </select>
+  );
+
   const sceneSelect = (
     <select
       aria-label="シーンを選択"
@@ -916,9 +928,32 @@ export function App() {
           <span />
         </button>
         {mapActions}
+        {mode === "edit" && (
+          <>
+            <details className="mobile-map-group" name="mobile-edit-tools">
+              <summary>追加</summary>
+              <div className="route-controls">{addBarrierControls}</div>
+            </details>
+            <details className="mobile-map-group" name="mobile-edit-tools">
+              <summary>調整</summary>
+              <div className="route-controls">
+                <p className="selected-label" aria-live="polite">{selectionLabel}</p>
+                {pivotSelect}
+                <div className="mobile-barrier-adjustments">
+                  <button type="button" aria-label="左に移動" onClick={() => moveSelected(-0.5, 0)} disabled={!canMoveSelection}>←</button>
+                  <button type="button" aria-label="上に移動" onClick={() => moveSelected(0, 0.5)} disabled={!canMoveSelection}>↑</button>
+                  <button type="button" aria-label="下に移動" onClick={() => moveSelected(0, -0.5)} disabled={!canMoveSelection}>↓</button>
+                  <button type="button" aria-label="右に移動" onClick={() => moveSelected(0.5, 0)} disabled={!canMoveSelection}>→</button>
+                  {rotationControls}
+                </div>
+                <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
+              </div>
+            </details>
+          </>
+        )}
         {mode === "move" && (
           <>
-            <details className="mobile-move-group" name="mobile-move-tools">
+            <details className="mobile-map-group" name="mobile-move-tools">
               <summary>シーン</summary>
               <div className="route-controls">
                 {sceneSelect}
@@ -927,18 +962,18 @@ export function App() {
                 {playAllScenesButton(true)}
               </div>
             </details>
-            <details className="mobile-move-group" name="mobile-move-tools">
+            <details className="mobile-map-group" name="mobile-move-tools">
               <summary>プレイヤー</summary>
               <div className="route-controls">
                 {addPlayerControls(true)}
                 <button type="button" className="secondary-button danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
               </div>
             </details>
-            <details className="mobile-move-group" name="mobile-move-tools">
+            <details className="mobile-map-group" name="mobile-move-tools">
               <summary>ルート</summary>
               {routeControls(true)}
             </details>
-            <details className="mobile-move-group" name="mobile-move-tools">
+            <details className="mobile-map-group" name="mobile-move-tools">
               <summary>射線</summary>
               {shotControls(true)}
             </details>
@@ -1058,16 +1093,7 @@ export function App() {
                 {selectedBarrier && (
                   <label className="pivot-row">
                     <span>基準頂点</span>
-                    <select
-                      value={selectedPivotIndex(selectedBarrier)}
-                      onChange={(event) => setSelectedVertexIndex(Number(event.target.value))}
-                    >
-                      {selectedBarrier.polygon.map((_, index) => (
-                        <option key={index} value={index}>
-                          頂点 {index + 1}
-                        </option>
-                      ))}
-                    </select>
+                    {pivotSelect}
                   </label>
                 )}
                 {mode === "edit" && (
@@ -1199,55 +1225,30 @@ export function App() {
         </section>
       </section>
 
-      {isEditing && (
-        <div className={`mobile-edit-bar${mode === "move" ? " mobile-move-controls" : ""}`}>
-          {mode === "move" && (
-            <div className="mobile-move-toolbar">
-              {moveControlsExpanded && (
-                <button type="button" className="secondary-button" onClick={() => updateMoveControlsPinned(!moveControlsPinned)}>
-                  {moveControlsPinned ? "折りたたみ式に戻す" : "常に表示"}
-                </button>
-              )}
-              {!moveControlsExpanded && selectionLabel !== "未選択" && <span role="status">{selectionLabel}</span>}
-              {!moveControlsPinned && (
-                <button
-                  type="button"
-                  className="secondary-button mobile-move-toggle"
-                  aria-label={moveControlsExpanded ? "操作を閉じる" : "操作を開く"}
-                  aria-expanded={moveControlsExpanded}
-                  aria-controls="mobile-move-options"
-                  onClick={() => setMoveControlsOpen((open) => !open)}
-                />
-              )}
-            </div>
-          )}
-          <div className="mobile-edit-options" id={mode === "move" ? "mobile-move-options" : undefined} hidden={mode === "move" && !moveControlsExpanded}>
+      {mode === "move" && (
+        <div className="mobile-edit-bar mobile-move-controls">
+          <div className="mobile-move-toolbar">
+            {moveControlsExpanded && (
+              <button type="button" className="secondary-button" onClick={() => updateMoveControlsPinned(!moveControlsPinned)}>
+                {moveControlsPinned ? "折りたたみ式に戻す" : "常に表示"}
+              </button>
+            )}
+            {!moveControlsExpanded && selectionLabel !== "未選択" && <span role="status">{selectionLabel}</span>}
+            {!moveControlsPinned && (
+              <button
+                type="button"
+                className="secondary-button mobile-move-toggle"
+                aria-label={moveControlsExpanded ? "操作を閉じる" : "操作を開く"}
+                aria-expanded={moveControlsExpanded}
+                aria-controls="mobile-move-options"
+                onClick={() => setMoveControlsOpen((open) => !open)}
+              />
+            )}
+          </div>
+          <div className="mobile-edit-options" id="mobile-move-options" hidden={!moveControlsExpanded}>
             <div className="mobile-edit-status">
               <strong aria-live="polite">{selectionLabel}</strong>
-              {selectedBarrier && (
-                <select
-                  value={selectedPivotIndex(selectedBarrier)}
-                  onChange={(event) => setSelectedVertexIndex(Number(event.target.value))}
-                >
-                  {selectedBarrier.polygon.map((_, index) => (
-                    <option key={index} value={index}>
-                      頂点 {index + 1}
-                    </option>
-                  ))}
-                </select>
-              )}
             </div>
-            {mode === "edit" && (
-              <div className="mobile-edit-controls">
-                <button type="button" onClick={() => moveSelected(-0.5, 0)} disabled={!canMoveSelection}>←</button>
-                <button type="button" onClick={() => moveSelected(0, 0.5)} disabled={!canMoveSelection}>↑</button>
-                <button type="button" onClick={() => moveSelected(0, -0.5)} disabled={!canMoveSelection}>↓</button>
-                <button type="button" onClick={() => moveSelected(0.5, 0)} disabled={!canMoveSelection}>→</button>
-                {rotationControls}
-                <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
-              </div>
-            )}
-            {mode === "edit" && <div className="mobile-add-row">{addBarrierControls}</div>}
           </div>
         </div>
       )}

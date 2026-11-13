@@ -403,8 +403,7 @@ button:disabled {
   color: #ffffff;
 }
 
-.add-row button[aria-pressed="true"],
-.mobile-add-row button[aria-pressed="true"] {
+.add-row button[aria-pressed="true"] {
   background: #20303d;
   color: #ffffff;
 }
@@ -797,14 +796,6 @@ button:disabled {
     backdrop-filter: blur(8px);
   }
 
-  .mobile-edit-status,
-  .mobile-add-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8px;
-    align-items: center;
-  }
-
   .mobile-edit-options:not([hidden]) {
     display: grid;
     gap: inherit;
@@ -816,27 +807,6 @@ button:disabled {
     font-size: 13px;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .mobile-edit-status strong:only-child {
-    grid-column: 1 / -1;
-  }
-
-  .mobile-edit-status select,
-  .mobile-add-row select {
-    min-height: 34px;
-    border: 1px solid #bccbd3;
-    border-radius: 6px;
-    padding: 6px 8px;
-    background: #ffffff;
-    color: #172834;
-    font-weight: 800;
-  }
-
-  .mobile-edit-controls {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 6px;
   }
 
   .mobile-move-controls {
@@ -908,16 +878,6 @@ button:disabled {
     transform: translateY(-3px) rotate(45deg);
   }
 
-  .mobile-edit-controls button,
-  .mobile-add-row button {
-    min-height: 36px;
-    border-radius: 6px;
-    background: #e7eef2;
-    color: #20303d;
-    font-size: 12px;
-    font-weight: 900;
-  }
-
   .canvas-frame {
     padding-bottom: 132px;
   }
@@ -977,13 +937,6 @@ button:disabled {
     padding: 8px 6px;
   }
 
-  .mobile-edit-controls {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .mobile-edit-controls .danger-button {
-    grid-column: span 2;
-  }
 }
 
 .editing-layout .score-block,
@@ -1034,7 +987,7 @@ button:disabled {
 
 @media (max-width: 720px) {
   .editing-layout {
-    --mode-button-width: 64px;
+    --mode-button-width: 90px;
     --mode-button-gutter: calc(var(--mode-button-width) + 8px);
     position: fixed;
     inset: 0 0 auto;
@@ -1048,10 +1001,6 @@ button:disabled {
     display: none;
   }
 
-  .editing-layout.movement-layout {
-    --mode-button-width: 90px;
-  }
-
   .editing-layout .mobile-action-bar,
   .editing-layout .mobile-edit-bar {
     position: static;
@@ -1063,9 +1012,15 @@ button:disabled {
   }
 
   .editing-layout > .mobile-action-bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: var(--mode-button-width);
+    grid-template-areas: none;
+    gap: 6px;
     align-self: start;
     justify-content: flex-end;
+    max-height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none;
     padding: 0;
     border: 0;
     background: transparent;
@@ -1073,11 +1028,12 @@ button:disabled {
     pointer-events: none;
   }
 
-  .editing-layout > .mobile-action-bar > :not([aria-pressed="true"]) {
+  .editing-layout > .mobile-action-bar > :not([aria-pressed="true"], .mobile-map-group) {
     display: none;
   }
 
   .editing-layout > .mobile-action-bar > [aria-pressed="true"] {
+    grid-area: auto;
     width: var(--mode-button-width);
     min-height: 34px;
     padding: 6px 12px;
@@ -1085,22 +1041,7 @@ button:disabled {
     pointer-events: auto;
   }
 
-  .movement-layout > .mobile-action-bar {
-    display: grid;
-    grid-template-columns: var(--mode-button-width);
-    grid-template-areas: none;
-    gap: 6px;
-    max-height: 100%;
-    overflow-y: auto;
-    scrollbar-width: none;
-  }
-
-  .movement-layout > .mobile-action-bar > .mobile-move-action,
-  .movement-layout > .mobile-action-bar > .mobile-move-group {
-    grid-area: auto;
-  }
-
-  .movement-layout > .mobile-action-bar > .mobile-move-group {
+  .mobile-map-group {
     display: block;
     border: 1px solid #c7d3da;
     border-radius: 8px;
@@ -1108,7 +1049,7 @@ button:disabled {
     pointer-events: auto;
   }
 
-  .mobile-move-group summary {
+  .mobile-map-group summary {
     padding: 0 4px;
     color: #405568;
     font-size: 12px;
@@ -1117,15 +1058,28 @@ button:disabled {
     cursor: pointer;
   }
 
-  .mobile-move-group .route-controls {
+  .mobile-map-group .route-controls {
     grid-template-columns: minmax(0, 1fr);
     padding: 0 6px 6px;
   }
 
-  .mobile-move-group select,
-  .movement-layout .mobile-move-group .secondary-button {
+  .mobile-map-group select,
+  .editing-layout .mobile-map-group .route-controls button {
     min-height: 36px;
     padding: 6px 4px;
+  }
+
+  .mobile-barrier-adjustments {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .mobile-map-group .route-controls button:not(.secondary-button) {
+    border-radius: 6px;
+    background: #e7eef2;
+    color: #20303d;
+    font-weight: 800;
   }
 
   .editing-map-panel {
