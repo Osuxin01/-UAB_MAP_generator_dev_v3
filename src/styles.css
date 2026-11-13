@@ -1111,10 +1111,6 @@ button:disabled {
     padding: 6px 4px;
   }
 
-  .mobile-route-controls {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .editing-map-panel {
     position: static;
     align-self: stretch;

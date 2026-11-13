@@ -757,11 +757,12 @@ export function App() {
     </div>
   );
 
-  const routeControls = (includePlayback: boolean) => mode === "move" && (
-    <div className={`route-controls${includePlayback ? "" : " mobile-route-controls"}`}>
+  const routeControls = (compact = false) => mode === "move" && (
+    <div className="route-controls">
       <button
         className="secondary-button"
         type="button"
+        aria-label="経路を描く"
         aria-pressed={drawingRoute}
         disabled={Boolean(playback) || draftWaypoints !== null || isGenerating}
         onClick={() => {
@@ -770,16 +771,17 @@ export function App() {
           setDrawingRoute(!drawingRoute);
         }}
       >
-        経路を描く
+        {compact ? "描く" : "経路を描く"}
       </button>
-      {includePlayback && playSceneButton()}
+      {!compact && playSceneButton()}
       <button
         className="secondary-button"
         type="button"
+        aria-label="経路を消す"
         disabled={!selectedWaypoints?.length || !canEditSelection || isGenerating}
         onClick={() => selectedPlayer && updatePlayer({ ...selectedPlayer, waypoints: undefined })}
       >
-        経路を消す
+        {compact ? "消す" : "経路を消す"}
       </button>
     </div>
   );
@@ -933,6 +935,10 @@ export function App() {
               </div>
             </details>
             <details className="mobile-move-group">
+              <summary>ルート</summary>
+              {routeControls(true)}
+            </details>
+            <details className="mobile-move-group">
               <summary>射線</summary>
               {shotControls(true)}
             </details>
@@ -1081,7 +1087,7 @@ export function App() {
                 <div className={mode === "move" ? "add-row player-add-row" : "add-row"}>
                   {mode === "move" ? addPlayerControls() : addBarrierControls}
                 </div>
-                {routeControls(true)}
+                {routeControls()}
                 {shotControls()}
               </div>
             </div>
@@ -1241,7 +1247,6 @@ export function App() {
               </div>
             )}
             {mode === "edit" && <div className="mobile-add-row">{addBarrierControls}</div>}
-            {routeControls(false)}
           </div>
         </div>
       )}
