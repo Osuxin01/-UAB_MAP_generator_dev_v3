@@ -1015,6 +1015,23 @@ button:disabled {
   max-height: 100%;
 }
 
+.movement-layout .canvas-frame {
+  --shot-note-height: 24px;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.movement-layout .canvas-frame canvas {
+  width: min(100cqw, calc((100cqh - var(--shot-note-height)) * 1100 / 1900));
+}
+
+.shot-display-note {
+  margin: 0;
+  padding-top: 4px;
+  color: #405568;
+  font-size: 12px;
+  line-height: 20px;
+}
+
 @media (max-width: 720px) {
   .editing-layout {
     --mode-button-width: 64px;
@@ -1134,6 +1151,15 @@ button:disabled {
     margin-inline-start: min(calc((100cqw - var(--field-width)) / 2), calc(100cqw - var(--mode-button-gutter) - var(--field-width)));
     aspect-ratio: var(--field-ratio);
     overflow: hidden;
+  }
+
+  .movement-layout .canvas-frame {
+    grid-template-rows: auto auto;
+    align-content: start;
+  }
+
+  .movement-layout .field-viewport {
+    --field-width: min(calc(100cqw - var(--mode-button-gutter)), calc((100cqh - var(--shot-note-height)) * var(--field-ratio)));
   }
 
   .editing-map-panel .field-viewport canvas {

@@ -918,7 +918,7 @@ export function App() {
         {mapActions}
         {mode === "move" && (
           <>
-            <details className="mobile-move-group">
+            <details className="mobile-move-group" name="mobile-move-tools">
               <summary>シーン</summary>
               <div className="route-controls">
                 {sceneSelect}
@@ -927,18 +927,18 @@ export function App() {
                 {playAllScenesButton(true)}
               </div>
             </details>
-            <details className="mobile-move-group">
+            <details className="mobile-move-group" name="mobile-move-tools">
               <summary>プレイヤー</summary>
               <div className="route-controls">
                 {addPlayerControls(true)}
                 <button type="button" className="secondary-button danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
               </div>
             </details>
-            <details className="mobile-move-group">
+            <details className="mobile-move-group" name="mobile-move-tools">
               <summary>ルート</summary>
               {routeControls(true)}
             </details>
-            <details className="mobile-move-group">
+            <details className="mobile-move-group" name="mobile-move-tools">
               <summary>射線</summary>
               {shotControls(true)}
             </details>
@@ -1194,6 +1194,7 @@ export function App() {
                   : isEditing ? "editable-canvas" : ""}
               />
             </div>
+            {mode === "move" && <p className="shot-display-note">射線はプレイヤーの移動後に表示されます</p>}
           </div>
         </section>
       </section>
