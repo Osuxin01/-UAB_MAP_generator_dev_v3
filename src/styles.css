@@ -431,12 +431,14 @@ button:disabled {
   cursor: crosshair;
 }
 
-.player-move-canvas {
+.player-move-canvas,
+.barrier-move-canvas {
   cursor: grab;
   touch-action: none;
 }
 
-.player-move-canvas:active {
+.player-move-canvas:active,
+.barrier-move-canvas:active {
   cursor: grabbing;
 }
 

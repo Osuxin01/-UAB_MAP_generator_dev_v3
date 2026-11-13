@@ -30,6 +30,14 @@ const PARAMETER_SCALE = 100 / PARAMETER_MAX;
 type ConfigKey = keyof GeneratorConfig;
 type MapPlayer = Pick<Player, "id" | "team" | "x" | "y" | "angle"> & { waypoints?: Point[]; inherited?: boolean };
 type PlayerDrag = { pointerId: number; player: MapPlayer; offset: Point; waypoints: Point[] | null };
+type BarrierDrag = {
+  pointerId: number;
+  barrier: Barrier;
+  partner: Barrier | null;
+  start: Point;
+  pivot: Point;
+  bounds: ReturnType<typeof polygonBounds>;
+};
 type PlayerRoute = { playerId: string; team: Team; points: Point[] };
 type PlaybackFrame = { positions: Map<string, Point>; movementFinished: boolean };
 type ShotLine = { team: Team; start: Point; end: Point };
@@ -132,6 +140,8 @@ export function App() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
   const playerDragRef = useRef<PlayerDrag | null>(null);
+  const barrierDragRef = useRef<BarrierDrag | null>(null);
+  const [draggedBarriers, setDraggedBarriers] = useState<Barrier[] | null>(null);
   const [config, setConfig] = useState<GeneratorConfig>(initialConfig);
   const scoreTuningFields = [...TACTICAL_FIELDS].sort(
     (a, b) => config[a.priorityKey] - config[b.priorityKey],
@@ -200,8 +210,9 @@ export function App() {
       ? displayedScene.players.map((player) => ({ ...player, ...playbackFrame.positions.get(player.id) }))
       : displayedScene.players;
     const visibleShotLines = !playback || showingArrivalShots ? displayedScene.shotLines : [];
-    drawMap(canvas, generated, displayedPlayers, selectedBarrier?.id ?? null, playback ? null : selectedPlayer?.id ?? null, selectedVertexIndex, routes, visibleShotLines, shotDraft);
-  }, [mode, generated, players, selectedBarrier, selectedPlayer, selectedVertexIndex, draftWaypoints, playback, playbackFrame, showingArrivalShots, displayedScene, shotDraft]);
+    const map = draggedBarriers ? { ...generated, barriers: draggedBarriers } : generated;
+    drawMap(canvas, map, displayedPlayers, selectedBarrier?.id ?? null, playback ? null : selectedPlayer?.id ?? null, selectedVertexIndex, routes, visibleShotLines, shotDraft);
+  }, [mode, generated, players, selectedBarrier, selectedPlayer, selectedVertexIndex, draftWaypoints, playback, playbackFrame, showingArrivalShots, displayedScene, shotDraft, draggedBarriers]);
 
   useEffect(() => {
     if (!playback) return;
@@ -219,7 +230,7 @@ export function App() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (!canMoveSelection) return;
+      if (!canMoveSelection || barrierDragRef.current) return;
       const active = document.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLSelectElement || active instanceof HTMLTextAreaElement) return;
 
@@ -499,6 +510,8 @@ export function App() {
   }
 
   function resetRouteInteraction() {
+    barrierDragRef.current = null;
+    setDraggedBarriers(null);
     playerDragRef.current = null;
     setDrawingRoute(false);
     setShotDraft(null);
@@ -538,23 +551,25 @@ export function App() {
     ));
   }
 
-  function updateBarrierWithSymmetricPartner(
-    original: Barrier,
-    updated: Barrier,
-  ) {
-    const partner = symmetricPartnerOf(original);
+  function barriersWithSymmetricPartner(updated: Barrier, partner: Barrier | null): Barrier[] | null {
     const mirrored = partner ? mirroredBarrierOf(updated, partner) : null;
-    if (!barrierWithinPlacementBounds(generated.field, updated)) return;
-    if (mirrored && !barrierWithinPlacementBounds(generated.field, mirrored)) return;
+    if (!barrierWithinPlacementBounds(generated.field, updated)) return null;
+    if (mirrored && !barrierWithinPlacementBounds(generated.field, mirrored)) return null;
 
-    updateEditedBarriers(generated.barriers.map((barrier) => {
+    return generated.barriers.map((barrier) => {
       if (barrier.id === updated.id) return updated;
       if (mirrored && barrier.id === mirrored.id) return mirrored;
       return barrier;
-    }));
+    });
+  }
+
+  function updateBarrierWithSymmetricPartner(original: Barrier, updated: Barrier) {
+    const barriers = barriersWithSymmetricPartner(updated, symmetricPartnerOf(original));
+    if (barriers) updateEditedBarriers(barriers);
   }
 
   function moveSelected(dx: number, dy: number) {
+    if (barrierDragRef.current) return;
     if (selectedPlayer) {
       updatePlayer({ ...selectedPlayer, x: selectedPlayer.x + dx, y: selectedPlayer.y + dy });
       return;
@@ -573,6 +588,7 @@ export function App() {
   }
 
   function rotateSelected(delta: number) {
+    if (barrierDragRef.current) return;
     const target = selectedBarrier;
     if (!target) return;
     const pivotIndex = selectedPivotIndex(target);
@@ -583,6 +599,7 @@ export function App() {
   }
 
   function deleteSelected() {
+    if (barrierDragRef.current) return;
     if (selectedPlayer) {
       setScenes((current) => current.map((scene, index) => index === sceneIndex ? {
         ...scene,
@@ -607,6 +624,7 @@ export function App() {
   }
 
   function addBarrier() {
+    if (barrierDragRef.current) return;
     const created = createBarrier(addShape, generated.field.width / 2, generated.field.height / 2 - 1.25, 0);
     const mirrored = createBarrier(addShape, generated.field.width - created.x, generated.field.height - created.y, created.angle + 180);
     updateEditedBarriers([...generated.barriers, created, mirrored], created.id);
@@ -627,8 +645,28 @@ export function App() {
   }
 
   function handleCanvasPointerDown(event: PointerEvent<HTMLCanvasElement>) {
-    if (isGenerating) return;
-    if (mode !== "move" || placingTeam || shotDraft || playback || !event.isPrimary || event.button !== 0 || playerDragRef.current) return;
+    if (isGenerating || !event.isPrimary || event.button !== 0 || barrierDragRef.current || playerDragRef.current) return;
+    if (mode === "edit") {
+      const point = canvasEventPoint(event);
+      const barrier = [...generated.barriers].reverse().find((candidate) => pointInPolygonLocal(point, candidate.polygon));
+      setSelectedId(barrier?.id ?? null);
+      if (barrier?.id !== selectedId) setSelectedVertexIndex(0);
+      if (!barrier) return;
+
+      const pivotIndex = barrier.id === selectedId ? selectedPivotIndex(barrier) : 0;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      barrierDragRef.current = {
+        pointerId: event.pointerId,
+        barrier,
+        partner: symmetricPartnerOf(barrier),
+        start: point,
+        pivot: barrier.polygon[pivotIndex],
+        bounds: polygonBounds(barrier.polygon),
+      };
+      return;
+    }
+
+    if (mode !== "move" || placingTeam || shotDraft || playback) return;
     const point = canvasEventPoint(event);
     const player = [...players].reverse().find((candidate) => pointDistance(point, candidate) <= PLAYER_RADIUS);
     setSelectedId(player?.id ?? null);
@@ -646,6 +684,12 @@ export function App() {
   }
 
   function handleCanvasPointerMove(event: PointerEvent<HTMLCanvasElement>) {
+    const barrierDrag = barrierDragRef.current;
+    if (barrierDrag?.pointerId === event.pointerId) {
+      setDraggedBarriers(getDraggedBarriers(barrierDrag, canvasEventPoint(event)));
+      return;
+    }
+
     const drag = playerDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     const point = canvasEventPoint(event);
@@ -661,7 +705,33 @@ export function App() {
     updatePlayer({ ...drag.player, ...next });
   }
 
-  function endPlayerDrag(event: PointerEvent<HTMLCanvasElement>) {
+  function getDraggedBarriers(drag: BarrierDrag, point: Point): Barrier[] | null {
+    const { barrier, partner, start, pivot, bounds } = drag;
+    const { width, height, gridSize } = generated.field;
+    const dx = point.x - start.x;
+    const dy = point.y - start.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < gridSize / 2) return null;
+
+    const x = boundedGridCoordinate(pivot.x + dx, pivot.x - bounds.minX, pivot.x + width - bounds.maxX, gridSize);
+    const y = boundedGridCoordinate(pivot.y + dy, pivot.y - bounds.minY, pivot.y + height - bounds.maxY, gridSize);
+    if (x === null || y === null || (x === pivot.x && y === pivot.y)) return null;
+
+    const moved = rebuildBarrier(barrier, barrier.x + x - pivot.x, barrier.y + y - pivot.y, barrier.angle);
+    return barriersWithSymmetricPartner(moved, partner);
+  }
+
+  function endCanvasDrag(event: PointerEvent<HTMLCanvasElement>) {
+    const barrierDrag = barrierDragRef.current;
+    if (barrierDrag?.pointerId === event.pointerId) {
+      barrierDragRef.current = null;
+      setDraggedBarriers(null);
+      if (event.type === "pointerup") {
+        const barriers = getDraggedBarriers(barrierDrag, canvasEventPoint(event));
+        if (barriers) updateEditedBarriers(barriers, barrierDrag.barrier.id);
+      }
+      return;
+    }
+
     const drag = playerDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     if (drag.waypoints && event.type === "pointerup") {
@@ -673,10 +743,9 @@ export function App() {
   }
 
   function handleCanvasClick(event: MouseEvent<HTMLCanvasElement>) {
-    if (isGenerating) return;
-    if (!isEditing) return;
+    if (isGenerating || mode !== "move") return;
     const world = canvasEventPoint(event);
-    if (mode === "move" && shotDraft) {
+    if (shotDraft) {
       const { width, height } = generated.field;
       if (world.x < 0 || world.x > width || world.y < 0 || world.y > height) return;
       if (!shotDraft.start) {
@@ -688,7 +757,7 @@ export function App() {
       }
       return;
     }
-    if (mode === "move" && placingTeam) {
+    if (placingTeam) {
       const { width, height } = generated.field;
       if (world.x < 0 || world.x > width || world.y < 0 || world.y > height) return;
       const player = fitPlayerToField({
@@ -701,10 +770,6 @@ export function App() {
       setSelectedId(player.id);
       return;
     }
-    if (mode !== "edit") return;
-    const clicked = [...generated.barriers].reverse().find((barrier) => pointInPolygonLocal(world, barrier.polygon));
-    setSelectedId(clicked?.id ?? null);
-    setSelectedVertexIndex(0);
   }
 
   const rotationControls = mode === "edit" && (
@@ -1208,12 +1273,12 @@ export function App() {
                 onClick={handleCanvasClick}
                 onPointerDown={handleCanvasPointerDown}
                 onPointerMove={handleCanvasPointerMove}
-                onPointerUp={endPlayerDrag}
-                onPointerCancel={endPlayerDrag}
-                onLostPointerCapture={endPlayerDrag}
+                onPointerUp={endCanvasDrag}
+                onPointerCancel={endCanvasDrag}
+                onLostPointerCapture={endCanvasDrag}
                 className={mode === "move" && !placingTeam && !shotDraft
                   ? `player-move-canvas${drawingRoute ? " route-drawing-canvas" : ""}`
-                  : isEditing ? "editable-canvas" : ""}
+                  : mode === "edit" ? "barrier-move-canvas" : isEditing ? "editable-canvas" : ""}
               />
             </div>
             {mode === "move" && <p className="shot-display-note">射線はプレイヤーの移動後に表示されます</p>}
@@ -1650,6 +1715,12 @@ function nextPivotGridPoint(
 
 function snapToGrid(value: number, grid: number): number {
   return Math.round(value / grid) * grid;
+}
+
+function boundedGridCoordinate(value: number, min: number, max: number, grid: number): number | null {
+  const first = Math.ceil((min - 1e-9) / grid) * grid;
+  const last = Math.floor((max + 1e-9) / grid) * grid;
+  return first <= last ? clampValue(snapToGrid(value, grid), first, last) : null;
 }
 
 function isOnGrid(value: number, grid: number): boolean {
