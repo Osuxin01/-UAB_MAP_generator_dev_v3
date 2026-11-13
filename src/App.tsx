@@ -724,9 +724,9 @@ export function App() {
       {scenes.map((_, index) => <option key={index} value={index}>シーン{index + 1}</option>)}
     </select>
   );
-  const addSceneButton = (
+  const addSceneButton = (compact = false) => (
     <button className="secondary-button" type="button" onClick={addScene} disabled={Boolean(playback) || draftWaypoints !== null || isGenerating}>
-      シーンを追加
+      {compact ? "追加" : "シーンを追加"}
     </button>
   );
   const playAllScenesButton = (compact = false) => (
@@ -736,7 +736,7 @@ export function App() {
       disabled={scenes.length < 2 || Boolean(playback) || draftWaypoints !== null || isGenerating}
       onClick={() => startScenePlayback(scenes.map((_, index) => index))}
     >
-      {compact ? "全シーン再生" : "全シーンを再生"}
+      {compact ? "すべて再生" : "全シーンを再生"}
     </button>
   );
   const playSceneButton = (compact = false) => (
@@ -746,13 +746,13 @@ export function App() {
       disabled={(!playback && !hasRoutes && !shotLines.length) || draftWaypoints !== null || isGenerating}
       onClick={() => playback ? stopPlayback() : startScenePlayback([sceneIndex])}
     >
-      {playback ? "停止" : compact ? "シーン再生" : "このシーンを再生"}
+      {playback ? "停止" : compact ? "再生" : "このシーンを再生"}
     </button>
   );
   const sceneControls = mode === "move" && (
     <div className="route-controls">
       {sceneSelect}
-      {addSceneButton}
+      {addSceneButton()}
       {playAllScenesButton()}
     </div>
   );
@@ -912,9 +912,10 @@ export function App() {
         </button>
         {mapActions}
         {mode === "move" && (
-          <div className="route-controls mobile-scene-controls" role="group" aria-label="シーン操作">
+          <div className="route-controls mobile-scene-controls" role="group" aria-labelledby="mobile-scene-heading">
+            <h2 id="mobile-scene-heading">シーン</h2>
             {sceneSelect}
-            {addSceneButton}
+            {addSceneButton(true)}
             {playSceneButton(true)}
             {playAllScenesButton(true)}
           </div>

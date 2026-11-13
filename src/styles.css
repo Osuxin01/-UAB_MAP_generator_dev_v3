@@ -1088,7 +1088,18 @@ button:disabled {
   .movement-layout > .mobile-action-bar > .mobile-scene-controls {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    padding: 6px;
+    border: 1px solid #c7d3da;
+    border-radius: 8px;
+    background: #f8fbfc;
     pointer-events: auto;
+  }
+
+  .mobile-scene-controls h2 {
+    margin: 0;
+    color: #405568;
+    font-size: 13px;
+    text-align: center;
   }
 
   .mobile-scene-controls select,
