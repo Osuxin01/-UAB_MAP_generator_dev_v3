@@ -912,13 +912,15 @@ export function App() {
         </button>
         {mapActions}
         {mode === "move" && (
-          <div className="route-controls mobile-scene-controls" role="group" aria-labelledby="mobile-scene-heading">
-            <h2 id="mobile-scene-heading">シーン</h2>
-            {sceneSelect}
-            {addSceneButton(true)}
-            {playSceneButton(true)}
-            {playAllScenesButton(true)}
-          </div>
+          <details className="mobile-scene-controls">
+            <summary>シーン</summary>
+            <div className="route-controls">
+              {sceneSelect}
+              {addSceneButton(true)}
+              {playSceneButton(true)}
+              {playAllScenesButton(true)}
+            </div>
+          </details>
         )}
       </div>
 

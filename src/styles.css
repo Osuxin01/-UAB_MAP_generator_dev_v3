@@ -1086,20 +1086,25 @@ button:disabled {
   }
 
   .movement-layout > .mobile-action-bar > .mobile-scene-controls {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    padding: 6px;
+    display: block;
     border: 1px solid #c7d3da;
     border-radius: 8px;
     background: #f8fbfc;
     pointer-events: auto;
   }
 
-  .mobile-scene-controls h2 {
-    margin: 0;
+  .mobile-scene-controls summary {
+    padding: 0 8px;
     color: #405568;
     font-size: 13px;
-    text-align: center;
+    font-weight: 900;
+    line-height: 44px;
+    cursor: pointer;
+  }
+
+  .mobile-scene-controls .route-controls {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 6px 6px;
   }
 
   .mobile-scene-controls select,
