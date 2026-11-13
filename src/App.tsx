@@ -912,8 +912,9 @@ export function App() {
         </button>
         {mapActions}
         {mode === "move" && (
-          <div className="route-controls mobile-playback-controls" role="group" aria-label="シーンの再生">
+          <div className="route-controls mobile-scene-controls" role="group" aria-label="シーン操作">
             {sceneSelect}
+            {addSceneButton}
             {playSceneButton(true)}
             {playAllScenesButton(true)}
           </div>
@@ -1195,7 +1196,6 @@ export function App() {
             </div>
           )}
           <div className="mobile-edit-options" id={mode === "move" ? "mobile-move-options" : undefined} hidden={mode === "move" && !moveControlsExpanded}>
-            {mode === "move" && <div className="route-controls">{addSceneButton}</div>}
             <div className="mobile-edit-status">
               <strong aria-live="polite">{selectionLabel}</strong>
               {selectedBarrier && (

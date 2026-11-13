@@ -1081,18 +1081,18 @@ button:disabled {
   }
 
   .movement-layout > .mobile-action-bar > .mobile-move-action,
-  .movement-layout > .mobile-action-bar > .mobile-playback-controls {
+  .movement-layout > .mobile-action-bar > .mobile-scene-controls {
     grid-area: auto;
   }
 
-  .movement-layout > .mobile-action-bar > .mobile-playback-controls {
+  .movement-layout > .mobile-action-bar > .mobile-scene-controls {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     pointer-events: auto;
   }
 
-  .mobile-playback-controls select,
-  .movement-layout .mobile-playback-controls .secondary-button {
+  .mobile-scene-controls select,
+  .movement-layout .mobile-scene-controls .secondary-button {
     min-height: 36px;
     padding: 6px 4px;
   }
