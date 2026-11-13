@@ -814,11 +814,12 @@ export function App() {
     </div>
   );
 
-  const addControls = mode === "move" ? (
+  const addPlayerControls = (compact = false) => (
     <>
       {(["ally", "enemy"] as const).map((team) => (
         <button
           key={team}
+          className={compact ? "secondary-button" : undefined}
           type="button"
           aria-pressed={placingTeam === team}
           disabled={Boolean(playback) || draftWaypoints !== null || isGenerating}
@@ -833,11 +834,12 @@ export function App() {
             }
           }}
         >
-          {team === "ally" ? "味方（緑）を追加" : "敵（赤）を追加"}
+          {compact ? `${TEAM_LABELS[team]}を追加` : team === "ally" ? "味方（緑）を追加" : "敵（赤）を追加"}
         </button>
       ))}
     </>
-  ) : (
+  );
+  const addBarrierControls = (
     <>
       <select
         aria-label="追加するバリケード"
@@ -912,15 +914,24 @@ export function App() {
         </button>
         {mapActions}
         {mode === "move" && (
-          <details className="mobile-scene-controls">
-            <summary>シーン</summary>
-            <div className="route-controls">
-              {sceneSelect}
-              {addSceneButton(true)}
-              {playSceneButton(true)}
-              {playAllScenesButton(true)}
-            </div>
-          </details>
+          <>
+            <details className="mobile-move-group">
+              <summary>シーン</summary>
+              <div className="route-controls">
+                {sceneSelect}
+                {addSceneButton(true)}
+                {playSceneButton(true)}
+                {playAllScenesButton(true)}
+              </div>
+            </details>
+            <details className="mobile-move-group">
+              <summary>プレイヤー</summary>
+              <div className="route-controls">
+                {addPlayerControls(true)}
+                <button type="button" className="secondary-button danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
+              </div>
+            </details>
+          </>
         )}
       </div>
 
@@ -1063,7 +1074,7 @@ export function App() {
                   <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
                 </div>
                 <div className={mode === "move" ? "add-row player-add-row" : "add-row"}>
-                  {addControls}
+                  {mode === "move" ? addPlayerControls() : addBarrierControls}
                 </div>
                 {routeControls(true)}
                 {shotControls}
@@ -1224,12 +1235,7 @@ export function App() {
                 <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
               </div>
             )}
-            <div className="mobile-add-row">
-              {addControls}
-              {mode === "move" && (
-                <button type="button" className="danger-button" onClick={deleteSelected} disabled={!canEditSelection}>削除</button>
-              )}
-            </div>
+            {mode === "edit" && <div className="mobile-add-row">{addBarrierControls}</div>}
             {routeControls(false)}
             {shotControls}
           </div>
